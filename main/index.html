@@ -3,15 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com"></script>
     <title>webVisualiser</title>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background: #000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+        }
+        canvas { 
+            display: block; 
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #overlay { 
+            color: white; 
+            z-index: 10; 
+            cursor: pointer; 
+            font-family: sans-serif; 
+            font-size: 24px;
+            letter-spacing: 2px;
+            border: 2px solid white;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Welcome to My Website</h1>
-    <p>This is a basic HTML setup.</p>
+    
     <div id="overlay">CLICK TO START</div>
     <canvas id="visualiser"></canvas>
     <script src="visualiser.js"></script>
