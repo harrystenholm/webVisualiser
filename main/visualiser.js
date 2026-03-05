@@ -45,8 +45,19 @@ function draw() {
     ctx.translate(centerX, centerY);
     ctx.scale(scale, scale);
 
-    // initialise outline
     let currentFramePoints = [];
+
+    //initialise volume and ellipse target size
+    let bassAvg = data[0] / 255; 
+    let targetSize = 10 + (bassAvg * 100);
+    currentSize += (targetSize - currentSize) * 0.2; // Lerp
+
+    // initiliase colour changing based on volume
+    // (0 is red, 120 is green, 240 is blue)
+    hue = 200 + (bassAvg * 100)
+    
+    ctx.beginPath();
+    // initialise outline
     for (let i = 0; i < numSpikes; i++) {
         let rawAmp = (data[i * 2] / 255) * 150;
 
@@ -58,57 +69,49 @@ function draw() {
         let r = (currentSize / 2) + spikeHeights[i];
         let x = Math.cos(angle) * r;
         let y = Math.sin(angle) * r;
-
+        
+        // 3. Spikes with Gravity
+        ctx.strokeStyle = `hsla(${hue}, 80%, 50%, 0.8)`;
+        ctx.lineWidth = 3;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
 
-        currentFramePoints.push({
-            x: x,
-            y: y
-        });
+        currentFramePoints.push({x: x, y: y});
     }
+    ctx.closePath();
+    ctx.stroke();
 
-    // update trail items
+    // update trail items every nth frame
     if (frameCount % frameGap === 0) {
         trailItems.push(currentFramePoints);
         if (trailItems.length > numTrails) trailItems.shift();
     }
 
+    // for each trail item, calculate points and draw 
     trailItems.forEach((points, index) => {
+        //create trail offset to scale each trail
+        let offset = 1 + (index * 0.01);
+
         let opacity = (index + 1) / (trailItems.length + 1);
         ctx.strokeStyle = `hsla(${hue}, 80%, 50%, ${opacity * 0.5})`;
-        ctx.lineWidth = 3 + (index * 0.3);
+        ctx.lineWidth = 1 + (index * 0.1);
 
         ctx.beginPath();
         points.forEach((p, i) => {
-            if (i === 0) ctx.moveTo(p.x, p.y);
-            else ctx.lineTo(p.x, p.y);
+            let x = p.x * offset;
+            let y = p.y * offset;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
         });
         ctx.closePath();
         ctx.stroke();
     });
 
     // initialise ellipse
-    let bassAvg = data[0] / 255; 
-    let targetSize = 10 + (bassAvg * 100);
-    currentSize += (targetSize - currentSize) * 0.2; // Lerp
-
-    // initiliase colour changing
-    // (0 is red, 120 is green, 240 is blue)
-    hue = 200 + (bassAvg * 100)
-
-    ctx.fillStyle = `hsla(${hue}, 80%, 50%, 0.6)`;
     ctx.beginPath();
+    ctx.fillStyle = `hsla(${hue}, 80%, 50%, 0.6)`;
     ctx.arc(0, 0, currentSize / 2, 0, Math.PI * 2);
     ctx.fill();
-
-    // 3. Spikes with Gravity
-    ctx.strokeStyle = '#ff0000';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-
-    ctx.closePath();
-    ctx.stroke();
     ctx.restore();
 }
 
