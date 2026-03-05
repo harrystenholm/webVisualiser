@@ -9,8 +9,8 @@ const numSpikes = 60;
 const gravity = 2.0;
 const numTrails = 12;
 let trailItems = [];
-let frameCount = 0
-const frameGap = 2
+let frameCount = 0;
+const frameGap = 2;
 const themeInput = document.getElementById('colorTheme');
 
 function stream() {
