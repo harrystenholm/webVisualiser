@@ -4,10 +4,11 @@ const overlay = document.getElementById('overlay');
 
 let audioCtx, analyser, data, hue, lightness;
 let spikeHeights = new Array(60).fill(0);
-let currentSize = 150;
+let currentSize = 5;
 const numSpikes = 60;
 const gravity = 2.0;
 const numTrails = 12;
+const numInner = 6;
 let trailItems = [];
 let frameCount = 0;
 const frameGap = 2;
@@ -37,47 +38,47 @@ function draw() {
     // retrieves theme and mode menu input value
     const theme = themeInput.value;
     const mode = modeInput.value;
-    
     if (mode === 'waveform') {
         analyser.getByteTimeDomainData(data);
     } else if (mode === 'frequency') {
         analyser.getByteFrequencyData(data);
     }
 
+    // Set canvas values
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
+    // Ensure it scales and stays centered with window size
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const scale = Math.min(canvas.width, canvas.height) / 600;
-
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.scale(scale, scale);
 
-    let currentFramePoints = [];
 
     //initialise volume and ellipse target size
     let bassAvg = data[0] / 255; 
     let targetSize = (bassAvg * 150);
-    currentSize += (targetSize - currentSize) * 0.65; // Lerp
+    currentSize += (targetSize - currentSize) * 0.35; // Lerp
 
     // initiliase colour changing based on volume
     // (0 is red, 120 is green, 240 is blue)
     if (theme === 'ocean') {
-        hue = 200 + (bassAvg * 100);
+        hue = 200 + (bassAvg * 40);
         lightness = 50;
     } else if (theme === 'fire') {
-        hue = 0 + (bassAvg * 40);
+        hue = 0 + (bassAvg);
         lightness = 60;
     } else if (theme === 'forest') {
         hue = 100 + (bassAvg * 40);
         lightness = 15;
     }
     
-    ctx.beginPath();
     // initialise outline
+    let currentFramePoints = [];
+    ctx.beginPath();
     for (let i = 0; i < numSpikes; i++) {
         let rawAmp = 0;
 
@@ -98,8 +99,12 @@ function draw() {
         let x = Math.cos(angle) * r;
         let y = Math.sin(angle) * r;
         
+        let style = `hsla(${hue}, 80%, ${lightness}, 0.8)`;
+        ctx.shadowBlur = 15 + (i * 5); 
+        ctx.shadowColor = style;
+
         // 3. Spikes with Gravity
-        ctx.strokeStyle = `hsla(${hue}, 80%, ${lightness}, 0.8)`;
+        ctx.strokeStyle = style;
         ctx.lineWidth = 3;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
@@ -135,16 +140,30 @@ function draw() {
         ctx.stroke();
     });
 
-    // initialise ellipse
-    let gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, currentSize / 2);
-    gradient.addColorStop(1, `hsla(${hue}, 100%, 30%, 0)`);
-    gradient.addColorStop(0.5, `hsla(${hue}, 80%, 50%, 0.4)`); // Mid glow
-    gradient.addColorStop(0, `hsla(${hue}, 100%, 80%, 0.8)`);
-    ctx.fillStyle = gradient;
+    for (i = 0; i < numInner; i++){
+        // initialise ellipse
+        ctx.beginPath();
+        let innerHue = hue + (i * 10);
+        let innerAlpha = 1 - (i * 0.05);
+        let style = `hsla(${innerHue}, 100%, 70%, ${innerAlpha})`;
+
+        ctx.shadowBlur = 15 + (i * 5); 
+        ctx.shadowColor = style;
+
+        ctx.strokeStyle = style;
+        ctx.lineWidth = 1;
+
+        let baseScale = 0.9 - (i * 0.1);
+        let wobble = Math.abs(Math.sin(frameCount * 0.01 + (i * 0.1))) * 10;
+        // The + Math.sin makes it "wobble" independently of the bass
+        let innerSize = Math.max(0, (currentSize / 2) * baseScale - wobble);
+
+        ctx.arc(0, 0, innerSize, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+    }
     
-    ctx.beginPath();
-    ctx.arc(0, 0, currentSize / 2, 0, Math.PI * 2);
-    ctx.fill();
     ctx.restore();
 }
 
