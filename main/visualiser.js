@@ -4,7 +4,7 @@ const overlay = document.getElementById('overlay');
 
 let audioCtx, analyser, dataArray;
 let spikeHeights = new Array(60).fill(0);
-let currentSzie = 150;
+let currentSize = 150;
 const numSpikes = 60;
 const gravity = 2.0;
 
@@ -74,4 +74,6 @@ function draw() {
     ctx.restore();
 }
 
-overlay.addEventListener('click', () => { if (!audioCtx) initAudio(); });
+overlay.addEventListener('click', () => {
+    if (!audioCtx) stream();
+});
