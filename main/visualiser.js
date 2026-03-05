@@ -2,7 +2,7 @@ const canvas = document.getElementById('visualiser');
 const ctx = canvas.getContext('2d');
 const overlay = document.getElementById('overlay');
 
-let audioCtx, analyser, dataArray;
+let audioCtx, analyser, data;
 let spikeHeights = new Array(60).fill(0);
 let currentSize = 150;
 const numSpikes = 60;
@@ -40,7 +40,7 @@ function draw() {
     ctx.scale(scale, scale)
 
     // 2. Circle Pulse (using low frequencies/bass)
-    let bassAvg = dataArray[0] / 255; 
+    let bassAvg = data[0] / 255; 
     let targetSize = 150 + (bassAvg * 100);
     currentSize += (targetSize - currentSize) * 0.2; // Lerp
 
@@ -55,7 +55,7 @@ function draw() {
     ctx.beginPath();
 
     for (let i = 0; i < numSpikes; i++) {
-        let rawAmp = (dataArray[i * 2] / 255) * 150;
+        let rawAmp = (data[i * 2] / 255) * 150;
 
         // Gravity logic
         if (rawAmp > spikeHeights[i]) spikeHeights[i] = rawAmp;
