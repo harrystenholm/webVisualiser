@@ -2,7 +2,7 @@ const canvas = document.getElementById('visualiser');
 const ctx = canvas.getContext('2d');
 const overlay = document.getElementById('overlay');
 
-let audioCtx, analyser, data, hue;
+let audioCtx, analyser, data, hue, lightness;
 let spikeHeights = new Array(60).fill(0);
 let currentSize = 150;
 const numSpikes = 60;
@@ -11,6 +11,7 @@ const numTrails = 12;
 let trailItems = [];
 let frameCount = 0
 const frameGap = 2
+const themeInput = document.getElementById('colorTheme');
 
 function stream() {
     audioCtx = new AudioContext();
@@ -33,6 +34,9 @@ function draw() {
     analyser.getByteFrequencyData(data);
     frameCount++;
 
+    // retrieves theme menu input value
+    const theme = themeInput.value;
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -54,7 +58,16 @@ function draw() {
 
     // initiliase colour changing based on volume
     // (0 is red, 120 is green, 240 is blue)
-    hue = 200 + (bassAvg * 100)
+    if (theme === 'ocean') {
+        hue = 200 + (bassAvg * 100);
+        lightness = 50;
+    } else if (theme === 'fire') {
+        hue = 0 + (bassAvg * 40);
+        lightness = 60;
+    } else if (theme === 'forest') {
+        hue = 100 + (bassAvg * 40);
+        lightness = 15;
+    }
     
     ctx.beginPath();
     // initialise outline
@@ -71,7 +84,7 @@ function draw() {
         let y = Math.sin(angle) * r;
         
         // 3. Spikes with Gravity
-        ctx.strokeStyle = `hsla(${hue}, 80%, 50%, 0.8)`;
+        ctx.strokeStyle = `hsla(${hue}, 80%, ${lightness}, 0.8)`;
         ctx.lineWidth = 3;
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
@@ -93,7 +106,7 @@ function draw() {
         let offset = 1 + (index * 0.01);
 
         let opacity = (index + 1) / (trailItems.length + 1);
-        ctx.strokeStyle = `hsla(${hue}, 80%, 50%, ${opacity * 0.5})`;
+        ctx.strokeStyle = `hsla(${hue}, 80%, ${lightness}%, ${opacity * 0.5})`;
         ctx.lineWidth = 1 + (index * 0.1);
 
         ctx.beginPath();
@@ -109,7 +122,7 @@ function draw() {
 
     // initialise ellipse
     ctx.beginPath();
-    ctx.fillStyle = `hsla(${hue}, 80%, 50%, 0.6)`;
+    ctx.fillStyle = `hsla(${hue}, 80%, ${lightness}%, 0.6)`;
     ctx.arc(0, 0, currentSize / 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
