@@ -60,8 +60,8 @@ function draw() {
 
     //initialise volume and ellipse target size
     let bassAvg = data[0] / 255; 
-    let targetSize = 10 + (bassAvg * 100);
-    currentSize += (targetSize - currentSize) * 0.2; // Lerp
+    let targetSize = (bassAvg * 150);
+    currentSize += (targetSize - currentSize) * 0.65; // Lerp
 
     // initiliase colour changing based on volume
     // (0 is red, 120 is green, 240 is blue)
@@ -121,7 +121,7 @@ function draw() {
         let offset = 1 + (index * 0.01);
 
         let opacity = (index + 1) / (trailItems.length + 1);
-        ctx.strokeStyle = `hsla(${hue}, 80%, ${lightness}%, ${opacity * 0.5})`;
+        ctx.strokeStyle = `hsla(${hue + (index * 5)}, 80%, ${lightness}%, ${opacity * 0.5})`;
         ctx.lineWidth = 1 + (index * 0.1);
 
         ctx.beginPath();
@@ -136,8 +136,13 @@ function draw() {
     });
 
     // initialise ellipse
+    let gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, currentSize / 2);
+    gradient.addColorStop(1, `hsla(${hue}, 100%, 30%, 0)`);
+    gradient.addColorStop(0.5, `hsla(${hue}, 80%, 50%, 0.4)`); // Mid glow
+    gradient.addColorStop(0, `hsla(${hue}, 100%, 80%, 0.8)`);
+    ctx.fillStyle = gradient;
+    
     ctx.beginPath();
-    ctx.fillStyle = `hsla(${hue}, 80%, ${lightness}%, 0.6)`;
     ctx.arc(0, 0, currentSize / 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
