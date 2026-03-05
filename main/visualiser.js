@@ -12,6 +12,7 @@ let trailItems = [];
 let frameCount = 0;
 const frameGap = 2;
 const themeInput = document.getElementById('colorTheme');
+const modeInput = document.getElementById('mode');
 
 function stream() {
     audioCtx = new AudioContext();
@@ -31,11 +32,17 @@ function stream() {
 
 function draw() {
     requestAnimationFrame(draw);
-    analyser.getByteFrequencyData(data);
     frameCount++;
 
-    // retrieves theme menu input value
+    // retrieves theme and mode menu input value
     const theme = themeInput.value;
+    const mode = modeInput.value;
+    
+    if (mode === 'waveform') {
+        analyser.getByteTimeDomainData(data);
+    } else if (mode === 'frequency') {
+        analyser.getByteFrequencyData(data);
+    }
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -72,7 +79,15 @@ function draw() {
     ctx.beginPath();
     // initialise outline
     for (let i = 0; i < numSpikes; i++) {
-        let rawAmp = (data[i * 2] / 255) * 150;
+        let rawAmp = 0;
+
+        if (mode === 'waveform') {
+            let waveId = Math.floor(i * (data.length / numSpikes));
+            let amplitude = Math.abs(data[waveId] - 128) / 128;
+            rawAmp = amplitude * 150;
+        } else if (mode === 'frequency') {
+            rawAmp = (data[i * 2] / 255) * 150;
+        }
 
         // Gravity logic
         if (rawAmp > spikeHeights[i]) spikeHeights[i] = rawAmp;
