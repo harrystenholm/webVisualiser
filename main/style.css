@@ -29,6 +29,7 @@ canvas {
     bottom: 0;
     left: 0;
     width: 100%;
+    box-sizing: border-box;
     background: rgba(20, 20, 20, 0.8);
     backdrop-filter: blur(5px);
     display: flex;
@@ -40,6 +41,37 @@ canvas {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 100;
 }
+#side-panel {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%); /* Centers it vertically */
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 5px 20px 20px 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-family: sans-serif;
+    transition: all 0.3s ease; /* Smooth slide effect */
+    z-index: 101;
+}
+
+#side-panel.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(50px); /* Slides right when hidden */
+}
+
+#side-panel h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 5px;
+}
+.spacer, .settings { flex: 1; }
 .control { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
-input[type=range] { cursor: pointer; }
+.settings { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.settingsLabel { display: flex; flex-direction: column; align-items: center; }

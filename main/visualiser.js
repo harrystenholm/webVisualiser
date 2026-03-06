@@ -1,19 +1,34 @@
+// get html variables
 const canvas = document.getElementById('visualiser');
 const ctx = canvas.getContext('2d');
 const overlay = document.getElementById('overlay');
+
+const settingsToggle = document.getElementById('advanced');
+const sidePanel = document.getElementById('side-panel');
+
+const themeInput = document.getElementById('colorTheme');
+const modeInput = document.getElementById('mode');
+
+const trailCountInput = document.getElementById('trailCount');
+const ellipseCountInput = document.getElementById('ellipseCount');
+
+// Toggle the side panel visibility
+settingsToggle.addEventListener('change', () => {
+    if (settingsToggle.checked) {
+        sidePanel.classList.remove('hidden');
+    } else {
+        sidePanel.classList.add('hidden');
+    }
+});
 
 let audioCtx, analyser, data, hue, lightness;
 let spikeHeights = new Array(60).fill(0);
 let currentSize = 5;
 const numSpikes = 60;
 const gravity = 2.0;
-const numTrails = 12;
-const numInner = 6;
 let trailItems = [];
 let frameCount = 0;
 const frameGap = 2;
-const themeInput = document.getElementById('colorTheme');
-const modeInput = document.getElementById('mode');
 
 function stream() {
     audioCtx = new AudioContext();
@@ -35,7 +50,8 @@ function draw() {
     requestAnimationFrame(draw);
     frameCount++;
 
-    // retrieves theme and mode menu input value
+    // retrieves num trails, glow, mode and theme input values
+    const numTrails = parseInt(trailCountInput.value);
     const theme = themeInput.value;
     const mode = modeInput.value;
     if (mode === 'waveform') {
@@ -118,6 +134,10 @@ function draw() {
     if (frameCount % frameGap === 0) {
         trailItems.push(currentFramePoints);
         if (trailItems.length > numTrails) trailItems.shift();
+        while (trailItems.length > numTrails) {
+            trailItems.shift();
+        }
+        if (numTrails === 0 ) trailItems = []
     }
 
     // for each trail item, calculate points and draw 
@@ -139,8 +159,9 @@ function draw() {
         ctx.closePath();
         ctx.stroke();
     });
-
-    for (i = 0; i < numInner; i++){
+    
+    const ellipseCount = parseInt(ellipseCountInput.value);
+    for (i = 0; i < ellipseCount; i++){
         // initialise ellipse
         ctx.beginPath();
         let innerHue = hue + (i * 10);
