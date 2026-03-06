@@ -56,13 +56,11 @@ canvas {
     transition: all 0.3s ease; /* Smooth slide effect */
     z-index: 101;
 }
-
 #side-panel.hidden {
     opacity: 0;
     pointer-events: none;
     transform: translateY(-50%) translateX(50px); /* Slides right when hidden */
 }
-
 #side-panel h3 {
     font-size: 12px;
     text-transform: uppercase;
@@ -71,7 +69,8 @@ canvas {
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 5px;
 }
-.spacer, .settings { flex: 1; }
+.typeOptions, .settings { flex: 1;}
+.typeOptions { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .control { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .settings { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-.settingsLabel { display: flex; flex-direction: column; align-items: center; }
+.optionsLabel, .settingsLabel { display: flex; flex-direction: column; align-items: center; gap: 5px;}
