@@ -89,9 +89,6 @@ function draw() {
         hue = 100 + (bassAvg * 40);
         lightness = 15;
     }
-    for (let i = 0; i < numSpikes; i++) {
-
-    }
 
     if (type === 'default') drawDefault(bassAvg, hue, lightness, numTrails, mode, data);
     else if (type === 'waveform') drawWaveform(hue, lightness, mode, data);
@@ -103,7 +100,7 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
     if (!data) return;
     //initialise volume and ellipse target size
     let targetSize = (bassAvg * 150);
-    currentSize += (targetSize - currentSize) * 0.35; // Lerp
+    currentSize += 10 + (targetSize - currentSize) * 0.35; // Lerp
     
     // initialise outline
     let currentFramePoints = [];
@@ -113,9 +110,9 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
         if (mode === 'waveform') {
             let waveId = Math.floor(i * (data.length / numSpikes));
             let amplitude = Math.abs(data[waveId] - 128) / 128;
-            rawAmp = amplitude * 150;
+            rawAmp = (amplitude * currentSize * bassAvg) * 0.9;
         } else if (mode === 'frequency') {
-            rawAmp = (data[i * 2] / 255) * 150;
+            rawAmp = (data[i * 2] / 255) * currentSize * bassAvg * 0.9;
         }
         // Gravity logic
         if (rawAmp > spikeHeights[i]) spikeHeights[i] = rawAmp;
@@ -128,10 +125,8 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
         
         let style = `hsla(${hue}, 80%, ${lightness}%, 0.8)`;
         
-        ctx.shadowBlur = 15; 
-        ctx.shadowColor = style;
         ctx.strokeStyle = style;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 3;
 
         // connect the lines
         if (i === 0) ctx.moveTo(x, y);
@@ -155,11 +150,12 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
     // for each trail item, calculate points and draw 
     trailItems.forEach((points, index) => {
         //create trail offset to scale each trail
-        let offset = 1 + (index * 0.05);
+        let progress = (index / trailItems.length);
+        let offset = 1 + ((bassAvg * (progress)));
 
-        let opacity = (index + 1) / (trailItems.length + 1);
+        let opacity = (trailItems.length) / index;
         ctx.strokeStyle = `hsla(${hue + (index * 5)}, 80%, ${lightness}%, ${opacity * 0.5})`;
-        ctx.lineWidth = 1 + (index * 0.1);
+        ctx.lineWidth = 1 - (index * 0.01);
 
         ctx.beginPath();
         points.forEach((p, i) => {
@@ -173,11 +169,11 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
     });
     
     const ellipseCount = parseInt(ellipseCountInput.value);
-    for (let i = 0; i < ellipseCount; i++){
+    for (let i = 1; i < ellipseCount + 1; i++){
         // initialise ellipse
         ctx.beginPath();
         let innerHue = hue + (i * 10);
-        let innerAlpha = 1 - (i * 0.05);
+        let innerAlpha = 1 - ((i / ellipseCount) * 0.5);
         let style = `hsla(${innerHue}, 100%, 70%, ${innerAlpha})`;
 
         ctx.shadowBlur = 15 + (i * 5); 
@@ -200,11 +196,12 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
 
 function drawWaveform(hue, lightness, mode, data) {
     if (!data) return;
-    for (let j = 0; j < 2; j++) {
+    if (frameCount % frameGap === 0) {
+        for (let j = 0; j < 2; j++) {
         ctx.beginPath();   
         let style = `hsla(${hue}, 80%, ${lightness}%, 0.8)`;
         ctx.strokeStyle = style;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
 
         for (let i = 0; i < numSpikes; i++) {
             let rawAmp = 0;
@@ -221,7 +218,7 @@ function drawWaveform(hue, lightness, mode, data) {
                 x = -300 + (600 * perc);
                 y = -rawAmp;
             } else if (j === 1) {
-                x = 300 - (600 * perc);
+                x = -300 + (600 * perc);
                 y = rawAmp;
             }
 
@@ -231,6 +228,8 @@ function drawWaveform(hue, lightness, mode, data) {
         }
         ctx.stroke();
     }
+    }
+
 }
 
 overlay.addEventListener('click', () => {
