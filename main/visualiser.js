@@ -91,7 +91,7 @@ function draw() {
     }
 
     if (type === 'default') drawDefault(bassAvg, hue, lightness, numTrails, mode, data);
-    else if (type === 'waveform') drawWaveform(hue, lightness, mode, data);
+    else if (type === 'waveform') drawWaveform(hue, lightness, numTrails, mode, data);
     
     ctx.restore();
 }
@@ -194,41 +194,67 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
     }
 }
 
-function drawWaveform(hue, lightness, mode, data) {
+function drawWaveform(hue, lightness, numTrails, mode, data) {
     if (!data) return;
-    if (frameCount % frameGap === 0) {
-        for (let j = 0; j < 2; j++) {
-        ctx.beginPath();   
-        let style = `hsla(${hue}, 80%, ${lightness}%, 0.8)`;
-        ctx.strokeStyle = style;
-        ctx.lineWidth = 2;
 
-        for (let i = 0; i < numSpikes; i++) {
-            let rawAmp = 0;
-            if (mode === 'waveform') {
-                let waveId = Math.floor(i * (data.length / numSpikes));
-                let amplitude = Math.abs(data[waveId] - 128) / 128;
-                rawAmp = amplitude * 150;
-            } else if (mode === 'frequency') {
-                rawAmp = (data[i * 2] / 255) * 150;
-            }
-            let x, y;
-            let perc = i / numSpikes
-            if (j === 0) {
-                x = -300 + (600 * perc);
-                y = -rawAmp;
-            } else if (j === 1) {
-                x = -300 + (600 * perc);
-                y = rawAmp;
-            }
-
-            // connect the lines
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y)
+    let currentAmp = [];
+    for (let i = 0; i < numSpikes; i++) {
+        let rawAmp = 0;
+        if (mode === 'waveform') {
+            let waveId = Math.floor(i * (data.length / numSpikes));
+            let amplitude = Math.abs(data[waveId] - 128) / 128;
+            rawAmp = amplitude * 250;
+        } else if (mode === 'frequency') {
+            rawAmp = (data[i * 2] / 255) * 150;
         }
+        let x = -300 + (600 * (i / numSpikes));
+        let y = rawAmp;
+
+        currentAmp.push({x: x, y: y});
+    }
+
+    if (frameCount % frameGap === 0) {
+        trailItems.push(currentAmp);
+        while (trailItems.length > numTrails) trailItems.shift();
+        if (numTrails === 0 ) trailItems = [];
+    }
+
+    // for each trail item, calculate points and draw 
+    trailItems.forEach((points, index) => {
+        //create trail offset to scale each trail  
+        let progress = (index / trailItems.length);
+        let offset = progress;
+
+        let opacity = 1;
+        ctx.strokeStyle = `hsla(${hue + (index * 5)}, 80%, ${lightness}%, ${opacity})`;
+        ctx.lineWidth = 3 * offset;
+    
+        ctx.beginPath();
+        points.forEach((p, i) => {
+            let y = p.y * offset;
+            if (i === 0) ctx.moveTo(p.x, y);
+            else ctx.lineTo(p.x, y);
+        });
         ctx.stroke();
-    }
-    }
+
+        ctx.beginPath();
+        points.forEach((p, i) => {
+            let y = p.y * offset;
+            if (i === 0) ctx.moveTo(p.x, -y);
+            else ctx.lineTo(p.x, -y);
+        });
+        ctx.stroke();
+    });
+    
+    ctx.lineWidth = 3;
+    [1, -1].forEach(dir => {
+        ctx.beginPath();
+        currentAmp.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y * dir);
+            else ctx.lineTo(p.x, p.y * dir);
+        });
+        ctx.stroke();
+    });
 
 }
 
