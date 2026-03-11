@@ -9,6 +9,7 @@ const sidePanel = document.getElementById('side-panel');
 const typeInput = document.getElementById('type');
 const themeInput = document.getElementById('theme');
 const modeInput = document.getElementById('mode');
+const densityInput = document.getElementById('lineDensity');
 
 const trailCountInput = document.getElementById('trailCount');
 const ellipseCountInput = document.getElementById('ellipseCount');
@@ -25,9 +26,9 @@ settingsToggle.addEventListener('change', () => {
 let audioCtx, analyser, data, hue, lightness;
 let spikeHeights = new Array(60).fill(0);
 let currentSize = 5;
-const numSpikes = 60;
 const gravity = 2.0;
 let trailItems = [];
+let waveformTrailItems = [];
 let frameCount = 0;
 const frameGap = 2;
 
@@ -53,16 +54,18 @@ function draw() {
 
     const type = typeInput.value;
 
-    // retrieves num trails, glow, mode and theme input values
+    // retrieves num trails, spikes, glow, mode and theme input values
     const numTrails = parseInt(trailCountInput.value);
     const theme = themeInput.value;
     const mode = modeInput.value;
+    const numSpikes = densityInput.value;
     if (mode === 'waveform') {
         analyser.getByteTimeDomainData(data);
     } else if (mode === 'frequency') {
         analyser.getByteFrequencyData(data);
     }
 
+    ctx.save();
     // Set canvas values
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -72,7 +75,6 @@ function draw() {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const scale = Math.min(canvas.width, canvas.height) / 600;
-    ctx.save();
     ctx.translate(centerX, centerY);
     ctx.scale(scale, scale);
     
@@ -83,20 +85,20 @@ function draw() {
         hue = 200 + (bassAvg * 40);
         lightness = 50;
     } else if (theme === 'fire') {
-        hue = 0 + (bassAvg);
+        hue = 1 + (bassAvg);
         lightness = 60;
     } else if (theme === 'forest') {
         hue = 100 + (bassAvg * 40);
         lightness = 15;
     }
 
-    if (type === 'default') drawDefault(bassAvg, hue, lightness, numTrails, mode, data);
-    else if (type === 'waveform') drawWaveform(hue, lightness, numTrails, mode, data);
+    if (type === 'default') drawDefault(bassAvg, hue, lightness, numSpikes, numTrails, mode, data);
+    else if (type === 'waveform') drawWaveform(hue, lightness, numSpikes, numTrails, mode, data);
     
     ctx.restore();
 }
 
-function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
+function drawDefault(bassAvg, hue, lightness, numSpikes, numTrails, mode, data) {
     if (!data) return;
     //initialise volume and ellipse target size
     let targetSize = (bassAvg * 150);
@@ -111,6 +113,7 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
             let waveId = Math.floor(i * (data.length / numSpikes));
             let amplitude = Math.abs(data[waveId] - 128) / 128;
             rawAmp = (amplitude * currentSize * bassAvg) * 0.9;
+            console.log(rawAmp, numSpikes)
         } else if (mode === 'frequency') {
             rawAmp = (data[i * 2] / 255) * currentSize * bassAvg * 0.9;
         }
@@ -150,10 +153,10 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
     // for each trail item, calculate points and draw 
     trailItems.forEach((points, index) => {
         //create trail offset to scale each trail
-        let progress = (index / trailItems.length);
+        let progress = (index + 1 / trailItems.length);
         let offset = 1 + ((bassAvg * (progress)));
 
-        let opacity = (trailItems.length) / index;
+        let opacity = (trailItems.length) / (index + 1);
         ctx.strokeStyle = `hsla(${hue + (index * 5)}, 80%, ${lightness}%, ${opacity * 0.5})`;
         ctx.lineWidth = 1 - (index * 0.01);
 
@@ -194,68 +197,71 @@ function drawDefault(bassAvg, hue, lightness, numTrails, mode, data) {
     }
 }
 
-function drawWaveform(hue, lightness, numTrails, mode, data) {
-    if (!data) return;
+function drawWaveform(hue, lightness, numSpikes, numTrails, mode, data) {
 
+    if (!data) return;    
+    
     let currentAmp = [];
+    let directions = [1, -1];
+    
     for (let i = 0; i < numSpikes; i++) {
         let rawAmp = 0;
         if (mode === 'waveform') {
             let waveId = Math.floor(i * (data.length / numSpikes));
-            let amplitude = Math.abs(data[waveId] - 128) / 128;
-            rawAmp = amplitude * 250;
+            rawAmp = (data[waveId] - 128) * 0.5;
         } else if (mode === 'frequency') {
             rawAmp = (data[i * 2] / 255) * 150;
         }
-        let x = -300 + (600 * (i / numSpikes));
+        let x = Math.round(-300 + ((300 * 2) * ((i + 1) / numSpikes)));
         let y = rawAmp;
-
+        console.log(x, y);
         currentAmp.push({x: x, y: y});
-    }
+    }   
 
-    if (frameCount % frameGap === 0) {
-        trailItems.push(currentAmp);
-        while (trailItems.length > numTrails) trailItems.shift();
-        if (numTrails === 0 ) trailItems = [];
-    }
-
-    // for each trail item, calculate points and draw 
-    trailItems.forEach((points, index) => {
-        //create trail offset to scale each trail  
-        let progress = (index / trailItems.length);
-        let offset = progress;
-
+    for (const dir of directions) {
+        if (mode === 'waveform' && dir === -1) {
+            break;
+        }
+        ctx.beginPath();
         let opacity = 1;
-        ctx.strokeStyle = `hsla(${hue + (index * 5)}, 80%, ${lightness}%, ${opacity})`;
-        ctx.lineWidth = 3 * offset;
-    
-        ctx.beginPath();
-        points.forEach((p, i) => {
-            let y = p.y * offset;
-            if (i === 0) ctx.moveTo(p.x, y);
-            else ctx.lineTo(p.x, y);
-        });
-        ctx.stroke();
-
-        ctx.beginPath();
-        points.forEach((p, i) => {
-            let y = p.y * offset;
-            if (i === 0) ctx.moveTo(p.x, -y);
-            else ctx.lineTo(p.x, -y);
-        });
-        ctx.stroke();
-    });
-    
-    ctx.lineWidth = 3;
-    [1, -1].forEach(dir => {
-        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${hue}, 80%, ${lightness}%, ${opacity})`;
+        ctx.lineWidth = 1;  
         currentAmp.forEach((p, i) => {
             if (i === 0) ctx.moveTo(p.x, p.y * dir);
             else ctx.lineTo(p.x, p.y * dir);
         });
         ctx.stroke();
-    });
+    }
 
+    if (frameCount % frameGap === 0) {
+        waveformTrailItems.push([...currentAmp]);
+        while (waveformTrailItems.length > numTrails) waveformTrailItems.shift();
+    }
+
+    waveformTrailItems.forEach((points, index) => {
+        //create trail offset to scale each trail 
+        let progress = ((index + 1) / (waveformTrailItems.length || 1) );
+        let step = 300 / (waveformTrailItems.length || 1);
+        let offset =  (waveformTrailItems.length - index) * step;
+
+        let opacity = 1 * progress;
+        ctx.strokeStyle = `hsla(${hue + (15 * progress)}, 80%, ${lightness}%, ${opacity})`;
+        ctx.lineWidth = 1 * progress;
+        directions.forEach(dir => {
+            ctx.beginPath();
+            points.forEach((p, i) => {
+                let y;
+                if (mode === 'waveform') {
+                    y = (p.y + offset) * dir;
+                } else if (mode === 'frequency') {
+                    y = (p.y * (1 - progress) * dir);
+                } 
+                if (i === 0) ctx.moveTo(p.x, y);
+                else ctx.lineTo(p.x, y);
+            });
+            ctx.stroke();
+        });
+    }); 
 }
 
 overlay.addEventListener('click', () => {
