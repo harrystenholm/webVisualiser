@@ -22,6 +22,17 @@ settingsToggle.addEventListener('change', () => {
         sidePanel.classList.add('hidden');
     }
 });
+document.addEventListener('click', (event) => {
+    const sidebar = document.querySelector('#side-panel');
+    const checkbox = document.querySelector('#advanced');
+    
+    // Check if the sidebar exists and if the click was OUTSIDE of it
+    if (sidebar && !sidebar.contains(event.target) && event.target !== checkbox) {
+        checkbox.checked = false;
+        sidebar.classList.add('hidden'); 
+        // Or call your specific collapse function: closeSidebar();
+    }
+});
 
 let audioCtx, analyser, data, hue, lightness;
 let spikeHeights = new Array(60).fill(0);
@@ -101,19 +112,26 @@ function draw() {
 function drawDefault(bassAvg, hue, lightness, numSpikes, numTrails, mode, data) {
     if (!data) return;
     //initialise volume and ellipse target size
-    let targetSize = (bassAvg * 150);
-    currentSize += 10 + (targetSize - currentSize) * 0.35; // Lerp
-    
+    let targetSize = (bassAvg * 200);
+    currentSize += 10 + (targetSize - currentSize) * 0.45; // Lerp
+
+    // dynamically update spikeHeights array length based on spike density
+    while (spikeHeights.length < numSpikes) {
+    spikeHeights.push(0); // Add new spikes at the end
+    }
+    while (spikeHeights.length > numSpikes) {
+        spikeHeights.pop(); // Remove extra spikes from the end
+    }
+
     // initialise outline
     let currentFramePoints = [];
     ctx.beginPath();    
     for (let i = 0; i < numSpikes; i++) {
         let rawAmp = 0;
+        let waveId = Math.floor(i * (data.length / numSpikes));
         if (mode === 'waveform') {
-            let waveId = Math.floor(i * (data.length / numSpikes));
             let amplitude = Math.abs(data[waveId] - 128) / 128;
             rawAmp = (amplitude * currentSize * bassAvg) * 0.9;
-            console.log(rawAmp, numSpikes)
         } else if (mode === 'frequency') {
             rawAmp = (data[i * 2] / 255) * currentSize * bassAvg * 0.9;
         }
@@ -153,7 +171,7 @@ function drawDefault(bassAvg, hue, lightness, numSpikes, numTrails, mode, data) 
     // for each trail item, calculate points and draw 
     trailItems.forEach((points, index) => {
         //create trail offset to scale each trail
-        let progress = (index + 1 / trailItems.length);
+        let progress = ((index + 1) / trailItems.length);
         let offset = 1 + ((bassAvg * (progress)));
 
         let opacity = (trailItems.length) / (index + 1);
