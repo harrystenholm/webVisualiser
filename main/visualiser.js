@@ -76,18 +76,19 @@ function draw() {
         analyser.getByteFrequencyData(data);
     }
 
-    ctx.save();
     // Set canvas values
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
     
     // Ensure it scales and stays centered with window size
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const scale = Math.min(canvas.width, canvas.height) / 600;
     ctx.translate(centerX, centerY);
-    ctx.scale(scale, scale);
+    ctx.scale((type === 'default') ? scale : 1, scale);
     
     let bassAvg = data[0] / 255 || 0; 
     // initiliase colour theme based on volume
@@ -216,8 +217,10 @@ function drawDefault(bassAvg, hue, lightness, numSpikes, numTrails, mode, data) 
 }
 
 function drawWaveform(hue, lightness, numSpikes, numTrails, mode, data) {
-
     if (!data) return;    
+
+    const w = (canvas.width / 2) - 10;
+    const h = canvas.height / 2;
     
     let currentAmp = [];
     let directions = [1, -1];
@@ -230,7 +233,7 @@ function drawWaveform(hue, lightness, numSpikes, numTrails, mode, data) {
         } else if (mode === 'frequency') {
             rawAmp = (data[i * 2] / 255) * 150;
         }
-        let x = Math.round(-300 + ((300 * 2) * ((i + 1) / numSpikes)));
+        let x = Math.round(-w + ((w * 2) * ((i + 1) / numSpikes)));
         let y = rawAmp;
         console.log(x, y);
         currentAmp.push({x: x, y: y});
